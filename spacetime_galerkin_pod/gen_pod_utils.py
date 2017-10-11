@@ -132,17 +132,19 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
             return (rhs(t).flatten() - _mm_nonednssps(A, vvec) -
                     _nnfunc(vvec, t)).flatten()
     else:
-        # ## TODO: do this with cholmod
-        if wecanhazcholmod:
-            pass
-
         if isspmatrix(M):
-            mfac = splu(M)
+            if wecanhazcholmod:
+                facmy = SparseFactorMassmat(M)
+                Minv = facmy.solve_M
+
+            else:
+                mfac = splu(M)
+                Minv = mfac.solve
 
             def semintrhs(vvec, t):
-                return mfac.solve(rhs(t).flatten() -
-                                  _mm_nonednssps(A, vvec).flatten() -
-                                  _nnfunc(vvec, t)).flatten()
+                return Minv(rhs(t).flatten() -
+                            _mm_nonednssps(A, vvec).flatten() -
+                            _nnfunc(vvec, t)).flatten()
         else:  # M is dense and (hopefully) small
             mki = np.linalg.inv(M)
 
