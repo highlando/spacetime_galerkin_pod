@@ -1,5 +1,5 @@
 import scipy.sparse as sps
-import scipy.linalg as spla
+import scipy.sparse.linalg as spsla
 import numpy as np
 try:
     from sksparse.cholmod import cholesky
@@ -22,43 +22,96 @@ class SparseFactorMassmat:
         if filestr is not None:
             try:
                 self.F = dou.load_spa(filestr + '_F')
+                self.P = dou.load_npa(filestr + '_P')
+                self.L = dou.load_spa(filestr + '_L')
                 print('loaded factor F that gives M = F*F.T from: ' + filestr)
             except IOError:
                 self.cmfac = cholesky(sps.csc_matrix(massmat))
                 self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                self.P = self.cmfac.P()
+                self.L = self.cmfac.L()
                 dou.save_spa(self.F, filestr + '_F')
+                dou.save_npa(self.P, filestr + '_P')
+                dou.save_spa(self.L, filestr + '_L')
                 print('saved factor F that gives M = F*F.T to: ' + filestr)
+                print('+ permutation `P` that makes F upper triangular')
+                print('+ and that `L` that is `L=PF`')
 
         else:
             try:
                 self.cmfac = cholesky(sps.csc_matrix(massmat))
                 self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                self.P = self.cmfac.P()
+                self.L = self.cmfac.L()
+
             except NameError:
                 import numpy.linalg as npla
                 L = npla.cholesky(massmat.todense())
                 self.F = sps.csr_matrix(L)
+                self.L = self.F
                 self.Ft = self.F.T
+                self.Pt = np.ones((self.F.shape[1], ))
 
         self.Ft = (self.F).T
+        self.Lt = (self.L).T
+        # getting the inverse permutation vector
+        s = np.empty(self.P.size, self.P.dtype)
+        s[self.P] = np.arange(self.P.size)
+        self.Pt = s
+
+    # ## TODO: maybe use the cholmod routines -- !!!
+    # ## however -- they base on an LDL' decomposition
 
     def solve_Ft(self, rhs):
-        litptrhs = spla.solve(self.Ft.todense(), rhs)
+        litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                            lower=False)[self.Pt, :]
         return litptrhs
 
     def solve_F(self, rhs):
-        litptrhs = spla.solve(self.F.todense(), rhs)
+        litptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
         return litptrhs
 
+    def solve_M(self, rhs):
+        try:
+            return self.cmfac.solve_A(rhs)
+        except AttributeError:
+            return self.solve_Ft(self.solve_F(rhs))
+
 if __name__ == '__main__':
+    import glob
+    import os
     N, k, alpha, density = 100, 5, 1e-2, 0.2
     E = sps.eye(N)
     V = sps.rand(N, k, density=density)
     mockmy = E + alpha*sps.csc_matrix(V*V.T)
 
-    testrhs = np.random.randn(N, k)
+    rhs = np.random.randn(N, 2)
 
-    facmy = SparseFactorMassmat(mockmy)
-    lytitestrhs = facmy.solve_Ft(testrhs)
+    # remove previously stored matrices
+    filestr = 'testing'
+    for fname in glob.glob(filestr + '*'):
+        os.remove(fname)
+
+    print('freshly computed...')
+    facmy = SparseFactorMassmat(mockmy, filestr=filestr)
+
+    Fitrhs = facmy.solve_Ft(rhs)
+    Firhs = facmy.solve_F(rhs)
+    mitestrhs = facmy.solve_M(rhs)
 
     print(np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense()))
-    print(np.allclose(testrhs, facmy.Ft*lytitestrhs))
+    print(np.allclose(rhs, facmy.Ft*Fitrhs))
+    print(np.allclose(rhs, facmy.F*Firhs))
+    print(np.allclose(rhs, mockmy*mitestrhs))
+
+    print('reloaded...')
+    facmy = SparseFactorMassmat(mockmy, filestr=filestr)
+
+    Fitrhs = facmy.solve_Ft(rhs)
+    Firhs = facmy.solve_F(rhs)
+    mitestrhs = facmy.solve_M(rhs)
+
+    print(np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense()))
+    print(np.allclose(rhs, facmy.Ft*Fitrhs))
+    print(np.allclose(rhs, facmy.F*Firhs))
+    print(np.allclose(rhs, mockmy*mitestrhs))

@@ -6,8 +6,10 @@ import sadptprj_riclyap_adi.lin_alg_utils as lau
 
 try:
     from .ldfnp_ext_cholmod import SparseFactorMassmat
+    wecanhazcholmod = True
 except ImportError:
-    print('no `sksparse.cholmod` gonna use dense routines')
+    wecanhazcholmod = False
+    print('no `sksparse.cholmod` gonna use dense for Cholesky factorization')
     from .mock_ext_cholmod import SparseFactorMassmat
 
 __all__ = ['uBasPLF',
@@ -131,6 +133,9 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
                     _nnfunc(vvec, t)).flatten()
     else:
         # ## TODO: do this with cholmod
+        if wecanhazcholmod:
+            pass
+
         if isspmatrix(M):
             mfac = splu(M)
 
