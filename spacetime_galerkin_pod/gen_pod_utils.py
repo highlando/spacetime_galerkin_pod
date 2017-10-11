@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import sadptprj_riclyap_adi.lin_alg_utils as lau
 
 try:
-    from ldfnp_ext_cholmod import SparseFactorMassmat
+    from .ldfnp_ext_cholmod import SparseFactorMassmat
 except ImportError:
     print('no `sksparse.cholmod` gonna use dense routines')
-    from mock_ext_cholmod import SparseFactorMassmat
+    from .mock_ext_cholmod import SparseFactorMassmat
 
 __all__ = ['uBasPLF',
            'get_genmeasuremat',
@@ -111,7 +111,7 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
     from scipy.sparse import isspmatrix
 
     if tmesh is None:
-        tmesh = np.linspace(t0, tE, Nts)
+        tmesh = np.linspace(t0, tE, Nts+1)
 
     def _nnfunc(vvec, t):
         if nfunc is None:
@@ -130,6 +130,7 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
             return (rhs(t).flatten() - _mm_nonednssps(A, vvec) -
                     _nnfunc(vvec, t)).flatten()
     else:
+        # ## TODO: do this with cholmod
         if isspmatrix(M):
             mfac = splu(M)
 
