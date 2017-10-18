@@ -7,7 +7,6 @@ except ImportError:
     print('Cannot import sksparse -- hope we can do without')
     print('Caution: solving with the factor F uses dense routines')
 
-import dolfin_navier_scipy.data_output_utils as dou
 
 """ A wrapper for the cholmod module that let's you work with
 
@@ -20,6 +19,12 @@ class SparseFactorMassmat:
 
     def __init__(self, massmat, filestr=None):
         if filestr is not None:
+            try:
+                import dolfin_navier_scipy.data_output_utils as dou
+            except ImportError:
+                raise NotImplementedError('need to specify routines for ' +
+                                          'loading and saving of the arrays')
+
             try:
                 self.F = dou.load_spa(filestr + '_F')
                 self.P = dou.load_npa(filestr + '_P')
