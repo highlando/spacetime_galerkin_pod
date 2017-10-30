@@ -18,39 +18,49 @@ import dolfin_navier_scipy.data_output_utils as dou
 
 class SparseFactorMassmat:
 
-    def __init__(self, massmat, filestr=None):
-        if filestr is not None:
-            try:
-                self.F = dou.load_spa(filestr + '_F')
-                self.P = dou.load_npa(filestr + '_P')
-                self.L = dou.load_spa(filestr + '_L')
-                print('loaded factor F that gives M = F*F.T from: ' + filestr)
-            except IOError:
-                self.cmfac = cholesky(sps.csc_matrix(massmat))
-                self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                self.P = self.cmfac.P()
-                self.L = self.cmfac.L()
-                dou.save_spa(self.F, filestr + '_F')
-                dou.save_npa(self.P, filestr + '_P')
-                dou.save_spa(self.L, filestr + '_L')
-                print('saved factor F that gives M = F*F.T to: ' + filestr)
-                print('+ permutation `P` that makes F upper triangular')
-                print('+ and that `L` that is `L=PF`')
-
+    def __init__(self, massmat, choleskydns=False, filestr=None):
+        # a true cholesky decomposition with `LL'` with `L` lower triangular
+        # bases on numpy's dense(!) cholesky factorization
+        if choleskydns:
+            import numpy.linalg as npla
+            L = npla.cholesky(massmat.todense())
+            self.F = sps.csr_matrix(L)
+            self.L = self.F
+            self.Ft = self.F.T
+            self.P = np.arange(self.F.shape[1])
         else:
-            try:
-                self.cmfac = cholesky(sps.csc_matrix(massmat))
-                self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                self.P = self.cmfac.P()
-                self.L = self.cmfac.L()
+            if filestr is not None:
+                try:
+                    self.F = dou.load_spa(filestr + '_F')
+                    self.P = dou.load_npa(filestr + '_P')
+                    self.L = dou.load_spa(filestr + '_L')
+                    print('loaded factor F s.t. M = F*F.T from: ' + filestr)
+                except IOError:
+                    self.cmfac = cholesky(sps.csc_matrix(massmat))
+                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                    self.P = self.cmfac.P()
+                    self.L = self.cmfac.L()
+                    dou.save_spa(self.F, filestr + '_F')
+                    dou.save_npa(self.P, filestr + '_P')
+                    dou.save_spa(self.L, filestr + '_L')
+                    print('saved factor F that gives M = F*F.T to: ' + filestr)
+                    print('+ permutation `P` that makes F upper triangular')
+                    print('+ and that `L` that is `L=PF`')
 
-            except NameError:
-                import numpy.linalg as npla
-                L = npla.cholesky(massmat.todense())
-                self.F = sps.csr_matrix(L)
-                self.L = self.F
-                self.Ft = self.F.T
-                self.Pt = np.ones((self.F.shape[1], ))
+            else:
+                try:
+                    self.cmfac = cholesky(sps.csc_matrix(massmat))
+                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                    self.P = np.arange(self.F.shape[1])
+                    self.L = self.cmfac.L()
+
+                except NameError:
+                    import numpy.linalg as npla
+                    L = npla.cholesky(massmat.todense())
+                    self.F = sps.csr_matrix(L)
+                    self.L = self.F
+                    self.Ft = self.F.T
+                    self.P = np.ones((self.F.shape[1], ), dtype=np.int)
 
         self.Ft = (self.F).T
         self.Lt = (self.L).T
