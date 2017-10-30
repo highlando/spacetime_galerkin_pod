@@ -28,6 +28,7 @@ __all__ = ['uBasPLF',
            'time_int',
            'hatfuncs',
            'time_int_semil',
+           'space_time_norm',
            'get_timspapar_podbas']
 
 
@@ -161,6 +162,25 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
                 full_output=full_output, **tldct)
 
     return vv
+
+
+def space_time_norm(errvecsqrd=None, tmesh=None,
+                    spatimvals=None, spacemmat=None):
+    """ compute the space time norm `int_T |v(t)|_M dt` (with the squares
+
+    and roots) using the piecewise trapezoidal rule in time """
+
+    if errvecsqrd is None:
+        errvecsql = []
+        for row in range(spatimvals.shape[0]):
+            crow = spatimvals[row, :]
+            errvecsql.append(np.dot(crow.T, lau.mm_dnssps(spacemmat, crow)))
+            errvecsqrd = np.array(errvecsql)
+
+    dtvec = tmesh[1:] - tmesh[:-1]
+    trapv = 0.5*(errvecsqrd[:-1] + errvecsqrd[1:])
+    errvsqrd = (dtvec*trapv).sum()
+    return np.sqrt(errvsqrd)
 
 
 def hatfuncs(n=None, x0=None, xe=None, N=None, df=False, retpts=False):
