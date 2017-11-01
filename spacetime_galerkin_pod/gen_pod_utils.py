@@ -360,14 +360,15 @@ def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
             Ns = Ms.shape[0]
             zlstXtlylist = []
             for clstXtly in lstXtlylist:
-                cXtly = msfac.solve_Ft(clstXtly)
+                # TODO 1/2: cXtly = msfac.solve_Ft(clstXtly)
                 # ## special treatment for the initial value:
-                zcXtly = np.copy(cXtly)
+                zcXtly = np.copy(clstXtly)
                 if xtratreatini:
                     zcXtly[0, :] = 0  # zero out the first row (corr. to t0)
                 elif xtratreattermi:
                     zcXtly[-1, :] = 0  # zero out the last row (corr. to te)
-                zlstXtlylist.append(msfac.Ft*zcXtly)
+                # TODO 2/2: zlstXtlylist.append(msfac.Ft*zcXtly)
+                zlstXtlylist.append(zcXtly)
                 UXs, _ = get_podbases(measmat=np.hstack(zlstXtlylist),
                                       nlsvecs=ntimevecs-1)
                 # and add this coeff explicitly to the basis
