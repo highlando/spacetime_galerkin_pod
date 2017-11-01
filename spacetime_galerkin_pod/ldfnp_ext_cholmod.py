@@ -36,16 +36,25 @@ class SparseFactorMassmat:
                     self.L = dou.load_spa(filestr + '_L')
                     print('loaded factor F s.t. M = F*F.T from: ' + filestr)
                 except IOError:
-                    self.cmfac = cholesky(sps.csc_matrix(massmat))
-                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                    self.P = self.cmfac.P()
-                    self.L = self.cmfac.L()
-                    dou.save_spa(self.F, filestr + '_F')
-                    dou.save_npa(self.P, filestr + '_P')
-                    dou.save_spa(self.L, filestr + '_L')
-                    print('saved factor F that gives M = F*F.T to: ' + filestr)
-                    print('+ permutation `P` that makes F upper triangular')
-                    print('+ and that `L` that is `L=PF`')
+                    try:
+                        self.cmfac = cholesky(sps.csc_matrix(massmat))
+                        self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                        self.P = self.cmfac.P()
+                        self.L = self.cmfac.L()
+                        dou.save_spa(self.F, filestr + '_F')
+                        dou.save_npa(self.P, filestr + '_P')
+                        dou.save_spa(self.L, filestr + '_L')
+                        print('saved F that gives M = F*F.T to: ' + filestr)
+                        print('+ permutatn `P` that makes F upper triangular')
+                        print('+ and that `L` that is `L=PF`')
+                    except NameError:
+                        print('fall back to dense routines')
+                        import numpy.linalg as npla
+                        L = npla.cholesky(massmat.todense())
+                        self.F = sps.csr_matrix(L)
+                        self.L = self.F
+                        self.Ft = self.F.T
+                        self.P = np.arange(self.F.shape[1])
 
             else:
                 try:
