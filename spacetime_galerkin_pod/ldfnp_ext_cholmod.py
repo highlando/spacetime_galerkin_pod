@@ -73,13 +73,20 @@ class SparseFactorMassmat:
     # ## however -- they base on an LDL' decomposition
 
     def solve_Ft(self, rhs):
-        litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
-                                            lower=False)[self.Pt, :]
+        try:
+            litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                lower=False)[self.Pt, :]
+        except AttributeError:  # no `..._triangular` in elder scipy like 0.15
+            litptrhs = spsla.spsolve(self.Lt, rhs, lower=False)[self.Pt, :]
+
         return litptrhs
 
     def solve_F(self, rhs):
-        litptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
-        return litptrhs
+        try:
+            liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
+        except AttributeError:  # no `..._triangular` in elder scipy like 0.15
+            liptrhs = spsla.spsolve(self.L, rhs[self.P, :])
+        return liptrhs
 
     def solve_M(self, rhs):
         try:
