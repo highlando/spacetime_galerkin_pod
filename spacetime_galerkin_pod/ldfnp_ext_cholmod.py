@@ -48,7 +48,7 @@ class SparseFactorMassmat:
                         print('+ permutatn `P` that makes F upper triangular')
                         print('+ and that `L` that is `L=PF`')
                     except NameError:
-                        print('fall back to dense routines')
+                        print('no sparse cholesky: fallback to dense routines')
                         import numpy.linalg as npla
                         L = npla.cholesky(massmat.todense())
                         self.F = sps.csr_matrix(L)
