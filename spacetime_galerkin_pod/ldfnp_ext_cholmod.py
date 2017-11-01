@@ -60,7 +60,7 @@ class SparseFactorMassmat:
                     self.F = sps.csr_matrix(L)
                     self.L = self.F
                     self.Ft = self.F.T
-                    self.P = np.ones((self.F.shape[1], ), dtype=np.int)
+                    self.P = np.arange(self.F.shape[1])
 
         self.Ft = (self.F).T
         self.Lt = (self.L).T
