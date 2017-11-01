@@ -77,7 +77,7 @@ class SparseFactorMassmat:
             litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
                                                 lower=False)[self.Pt, :]
         except AttributeError:  # no `..._triangular` in elder scipy like 0.15
-            litptrhs = spsla.spsolve(self.Lt, rhs, lower=False)[self.Pt, :]
+            litptrhs = spsla.spsolve(self.Lt, rhs)[self.Pt, :]
 
         return litptrhs
 
