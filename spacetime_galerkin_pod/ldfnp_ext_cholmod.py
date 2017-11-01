@@ -7,7 +7,6 @@ except ImportError:
     print('Cannot import sksparse -- hope we can do without')
     print('Caution: solving with the factor F uses dense routines')
 
-import dolfin_navier_scipy.data_output_utils as dou
 
 """ A wrapper for the cholmod module that let's you work with
 
@@ -46,21 +45,6 @@ class SparseFactorMassmat:
                     print('saved factor F that gives M = F*F.T to: ' + filestr)
                     print('+ permutation `P` that makes F upper triangular')
                     print('+ and that `L` that is `L=PF`')
-
-            else:
-                try:
-                    self.cmfac = cholesky(sps.csc_matrix(massmat))
-                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                    self.P = np.arange(self.F.shape[1])
-                    self.L = self.cmfac.L()
-
-                except NameError:
-                    import numpy.linalg as npla
-                    L = npla.cholesky(massmat.todense())
-                    self.F = sps.csr_matrix(L)
-                    self.L = self.F
-                    self.Ft = self.F.T
-                    self.P = np.ones((self.F.shape[1], ), dtype=np.int)
 
         self.Ft = (self.F).T
         self.Lt = (self.L).T
