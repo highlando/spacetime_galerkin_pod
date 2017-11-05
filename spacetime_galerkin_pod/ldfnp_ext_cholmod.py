@@ -35,16 +35,40 @@ class SparseFactorMassmat:
                     self.L = dou.load_spa(filestr + '_L')
                     print('loaded factor F s.t. M = F*F.T from: ' + filestr)
                 except IOError:
+                    try:
+                        self.cmfac = cholesky(sps.csc_matrix(massmat))
+                        self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                        self.P = self.cmfac.P()
+                        self.L = self.cmfac.L()
+                        dou.save_spa(self.F, filestr + '_F')
+                        dou.save_npa(self.P, filestr + '_P')
+                        dou.save_spa(self.L, filestr + '_L')
+                        print('saved F that gives M = F*F.T to: ' + filestr)
+                        print('+ permutatn `P` that makes F upper triangular')
+                        print('+ and that `L` that is `L=PF`')
+                    except NameError:
+                        print('no sparse cholesky: fallback to dense routines')
+                        import numpy.linalg as npla
+                        L = npla.cholesky(massmat.todense())
+                        self.F = sps.csr_matrix(L)
+                        self.L = self.F
+                        self.Ft = self.F.T
+                        self.P = np.arange(self.F.shape[1])
+
+            else:
+                try:
                     self.cmfac = cholesky(sps.csc_matrix(massmat))
                     self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                    self.P = self.cmfac.P()
+                    self.P = np.arange(self.F.shape[1])
                     self.L = self.cmfac.L()
-                    dou.save_spa(self.F, filestr + '_F')
-                    dou.save_npa(self.P, filestr + '_P')
-                    dou.save_spa(self.L, filestr + '_L')
-                    print('saved factor F that gives M = F*F.T to: ' + filestr)
-                    print('+ permutation `P` that makes F upper triangular')
-                    print('+ and that `L` that is `L=PF`')
+
+                except NameError:
+                    import numpy.linalg as npla
+                    L = npla.cholesky(massmat.todense())
+                    self.F = sps.csr_matrix(L)
+                    self.L = self.F
+                    self.Ft = self.F.T
+                    self.P = np.arange(self.F.shape[1])
 
         self.Ft = (self.F).T
         self.Lt = (self.L).T
@@ -57,13 +81,26 @@ class SparseFactorMassmat:
     # ## however -- they base on an LDL' decomposition
 
     def solve_Ft(self, rhs):
-        litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
-                                            lower=False)[self.Pt, :]
+        try:
+            litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                lower=False)[self.Pt, :]
+        except AttributeError:  # no `..._triangular` in elder scipy like 0.15
+            try:
+                litptrhs = spsla.spsolve(self.Lt, rhs)[self.Pt, :]
+            except IndexError:
+                litptrhs = spsla.spsolve(self.Lt, rhs)[self.Pt]
+
         return litptrhs
 
     def solve_F(self, rhs):
-        litptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
-        return litptrhs
+        try:
+            liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
+        except AttributeError:  # no `..._triangular` in elder scipy like 0.15
+            try:
+                liptrhs = spsla.spsolve(self.L, rhs[self.P, :])
+            except IndexError:
+                liptrhs = spsla.spsolve(self.L, rhs[self.P])
+        return liptrhs
 
     def solve_M(self, rhs):
         try:

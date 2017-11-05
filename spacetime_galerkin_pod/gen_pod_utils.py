@@ -319,10 +319,14 @@ def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
         mass matrix of the space discretization
 
     """
+
+    # msstr = 'data/sparse_massmat_factor_S_dims{0}'.format(Ms.shape[0])
+    msfac = SparseFactorMassmat(sps.csc_matrix(Ms), choleskydns=True)
+    # we need the factors to be lower triangular to properly treat the
+    # initial conditions. that's why we set `choleskydns`
+
     mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
-    msstr = 'data/sparse_massmat_factor_S_dims{0}'.format(Ms.shape[0])
     myfac = SparseFactorMassmat(sps.csc_matrix(My), filestr=mystr)
-    msfac = SparseFactorMassmat(sps.csc_matrix(Ms), filestr=msstr)
 
     if not xms.__class__ == list:
         xms = [xms]
@@ -356,24 +360,23 @@ def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
             Ns = Ms.shape[0]
             zlstXtlylist = []
             for clstXtly in lstXtlylist:
-                cXtly = msfac.solve_Ft(clstXtly)
+                # TODO 1/2: cXtly = msfac.solve_Ft(clstXtly)
                 # ## special treatment for the initial value:
-                zcXtly = np.copy(cXtly)
+                zcXtly = np.copy(clstXtly)
                 if xtratreatini:
                     zcXtly[0, :] = 0  # zero out the first row (corr. to t0)
                 elif xtratreattermi:
                     zcXtly[-1, :] = 0  # zero out the last row (corr. to te)
-                zlstXtlylist.append(msfac.Ft*zcXtly)
+                # TODO 2/2: zlstXtlylist.append(msfac.Ft*zcXtly)
+                zlstXtlylist.append(zcXtly)
                 UXs, _ = get_podbases(measmat=np.hstack(zlstXtlylist),
                                       nlsvecs=ntimevecs-1)
                 # and add this coeff explicitly to the basis
                 if xtratreatini:
-                    hinibasv = msfac.Ft*np.\
-                        r_[1, np.zeros((Ns-1, ))].reshape((Ns, 1))
+                    hinibasv = np.r_[1, np.zeros((Ns-1, ))].reshape((Ns, 1))
                     UXs = np.c_[hinibasv, UXs]
                 elif xtratreattermi:
-                    htermbasv = msfac.Ft*np.\
-                        r_[np.zeros((Ns-1, )), 1.].reshape((Ns, 1))
+                    htermbasv = np.r_[np.zeros((Ns-1, )), 1.].reshape((Ns, 1))
                     UXs = np.c_[htermbasv, UXs]
         else:
             UXs = rsvs.T
