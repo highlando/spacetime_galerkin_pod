@@ -300,7 +300,7 @@ def HaarWavelet(n, x0, xe, N):
         return haar
 
 
-def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
+def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
                              nspacevecs=0, ntimevecs=0,
                              xtratreatini=False, xtratreattermi=False):
     """
@@ -313,6 +313,7 @@ def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
     ---
     xms: (Nq, Ns)
         `X*Ms` - the generalized measurements times the time mass mat
+        can be also a list `[xms, lms]`
     Ms: (Ns, Ns) sparse array
         mass matrix of the time discretization
     My: (Nq, Nq) sparse array
@@ -321,7 +322,12 @@ def get_podbases_wrtmassmats(xms=None, xmslist=None, Ms=None, My=None,
     """
 
     # msstr = 'data/sparse_massmat_factor_S_dims{0}'.format(Ms.shape[0])
-    msfac = SparseFactorMassmat(sps.csc_matrix(Ms), choleskydns=True)
+    if xtratreatini:
+        msfac = SparseFactorMassmat(sps.csc_matrix(Ms), choleskydns=True,
+                                    uppertriag=True)
+    else:
+        msfac = SparseFactorMassmat(sps.csc_matrix(Ms), choleskydns=True,
+                                    uppertriag=False)
     # we need the factors to be lower triangular to properly treat the
     # initial conditions. that's why we set `choleskydns`
 
@@ -639,7 +645,8 @@ def get_redmatfunc(ULk=None, UVk=None, matfunc=None):
     return redmatfunc
 
 
-def get_spaprjredmod(M=None, A=None, nonl=None, rhs=None, Uk=None, prjUk=None):
+def get_spaprjredmod(M=None, A=None, B=None,
+                     nonl=None, rhs=None, Uk=None, prjUk=None):
 
     if prjUk is not None:
         def projcoef(yfull):
@@ -667,7 +674,11 @@ def get_spaprjredmod(M=None, A=None, nonl=None, rhs=None, Uk=None, prjUk=None):
     else:
         nonl_red = None
 
-    return Ak, Mk, nonl_red, rhs_red, liftcoef, projcoef
+    if B is None:
+        return Ak, Mk, nonl_red, rhs_red, liftcoef, projcoef
+    else:
+        Bk = (Uk.T).dot(B)
+        return Ak, Mk, Bk, nonl_red, rhs_red, liftcoef, projcoef
 
 
 def get_prjred_modfem(M=None, A=None, nonl=None, rhs=None, Uk=None):

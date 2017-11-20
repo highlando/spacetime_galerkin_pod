@@ -1,6 +1,8 @@
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 import numpy as np
+import scipy.io
+
 try:
     from sksparse.cholmod import cholesky
 except ImportError:
@@ -8,6 +10,24 @@ except ImportError:
     print('Caution: solving with the factor F uses dense routines')
 
 
+def save_npa(v, fstring='notspecified'):
+    np.save(fstring, v)
+    return
+
+
+def load_npa(fstring):
+    if not fstring[-4:] == '.npy':
+        return np.load(fstring+'.npy')
+    else:
+        return np.load(fstring)
+
+
+def save_spa(sparray, fstring='notspecified'):
+    scipy.io.mmwrite(fstring, sparray)
+
+
+def load_spa(fstring):
+    return scipy.io.mmread(fstring).tocsc()
 """ A wrapper for the cholmod module that let's you work with
 
     `F*F.T = M` rather than `L*D*L.T = P*M*P.T`
@@ -17,22 +37,33 @@ except ImportError:
 
 class SparseFactorMassmat:
 
-    def __init__(self, massmat, choleskydns=False, filestr=None):
+    def __init__(self, massmat, choleskydns=False,
+                 uppertriag=False, filestr=None):
         # a true cholesky decomposition with `LL'` with `L` lower triangular
         # bases on numpy's dense(!) cholesky factorization
+        # if `uppertriag` an uppertriangular `L` is returned
         if choleskydns:
             import numpy.linalg as npla
-            L = npla.cholesky(massmat.todense())
+            nnn = massmat.shape[1]
+            if uppertriag:
+                # ## the permutation that reverses the order of the columns
+                Rord = np.fliplr(np.arange(nnn).reshape((1, nnn))).flatten()
+                mpm = massmat[Rord, :][:, Rord]  # reverting the matrix
+                L = npla.cholesky(mpm.todense())
+                L = L[:, Rord][Rord, :]
+            else:
+                L = npla.cholesky(massmat.todense())
             self.F = sps.csr_matrix(L)
             self.L = self.F
             self.Ft = self.F.T
-            self.P = np.arange(self.F.shape[1])
+            self.P = np.arange(nnn)
+
         else:
             if filestr is not None:
                 try:
-                    self.F = dou.load_spa(filestr + '_F')
-                    self.P = dou.load_npa(filestr + '_P')
-                    self.L = dou.load_spa(filestr + '_L')
+                    self.F = load_spa(filestr + '_F')
+                    self.P = load_npa(filestr + '_P')
+                    self.L = load_spa(filestr + '_L')
                     print('loaded factor F s.t. M = F*F.T from: ' + filestr)
                 except IOError:
                     try:
@@ -40,9 +71,9 @@ class SparseFactorMassmat:
                         self.F = self.cmfac.apply_Pt(self.cmfac.L())
                         self.P = self.cmfac.P()
                         self.L = self.cmfac.L()
-                        dou.save_spa(self.F, filestr + '_F')
-                        dou.save_npa(self.P, filestr + '_P')
-                        dou.save_spa(self.L, filestr + '_L')
+                        save_spa(self.F, filestr + '_F')
+                        save_npa(self.P, filestr + '_P')
+                        save_spa(self.L, filestr + '_L')
                         print('saved F that gives M = F*F.T to: ' + filestr)
                         print('+ permutatn `P` that makes F upper triangular')
                         print('+ and that `L` that is `L=PF`')
@@ -76,14 +107,19 @@ class SparseFactorMassmat:
         s = np.empty(self.P.size, self.P.dtype)
         s[self.P] = np.arange(self.P.size)
         self.Pt = s
+        self.uppertriag = uppertriag
 
     # ## TODO: maybe use the cholmod routines -- !!!
     # ## however -- they base on an LDL' decomposition
 
     def solve_Ft(self, rhs):
         try:
-            litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
-                                                lower=False)[self.Pt, :]
+            if self.uppertriag:
+                litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                    lower=True)[self.Pt, :]
+            else:
+                litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                    lower=False)[self.Pt, :]
         except AttributeError:  # no `..._triangular` in elder scipy like 0.15
             try:
                 litptrhs = spsla.spsolve(self.Lt, rhs)[self.Pt, :]
@@ -94,7 +130,11 @@ class SparseFactorMassmat:
 
     def solve_F(self, rhs):
         try:
-            liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
+            if self.uppertriag:
+                liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :],
+                                                   lower=False)
+            else:
+                liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
         except AttributeError:  # no `..._triangular` in elder scipy like 0.15
             try:
                 liptrhs = spsla.spsolve(self.L, rhs[self.P, :])
@@ -137,6 +177,18 @@ if __name__ == '__main__':
 
     print('reloaded...')
     facmy = SparseFactorMassmat(mockmy, filestr=filestr)
+
+    Fitrhs = facmy.solve_Ft(rhs)
+    Firhs = facmy.solve_F(rhs)
+    mitestrhs = facmy.solve_M(rhs)
+
+    print(np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense()))
+    print(np.allclose(rhs, facmy.Ft*Fitrhs))
+    print(np.allclose(rhs, facmy.F*Firhs))
+    print(np.allclose(rhs, mockmy*mitestrhs))
+
+    print('the dense cholesky upper triangular branch...')
+    facmy = SparseFactorMassmat(mockmy, choleskydns=True, uppertriag=True)
 
     Fitrhs = facmy.solve_Ft(rhs)
     Firhs = facmy.solve_F(rhs)
