@@ -383,7 +383,7 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
                     UXs = np.c_[hinibasv, UXs]
                 elif xtratreattermi:
                     htermbasv = np.r_[np.zeros((Ns-1, )), 1.].reshape((Ns, 1))
-                    UXs = np.c_[htermbasv, UXs]
+                    UXs = np.c_[UXs, htermbasv]
         else:
             UXs = rsvs.T
 
@@ -645,7 +645,7 @@ def get_redmatfunc(ULk=None, UVk=None, matfunc=None):
     return redmatfunc
 
 
-def get_spaprjredmod(M=None, A=None, B=None,
+def get_spaprjredmod(M=None, A=None, B=None, C=None,
                      nonl=None, rhs=None, Uk=None, prjUk=None):
 
     if prjUk is not None:
@@ -678,7 +678,11 @@ def get_spaprjredmod(M=None, A=None, B=None,
         return Ak, Mk, nonl_red, rhs_red, liftcoef, projcoef
     else:
         Bk = (Uk.T).dot(B)
-        return Ak, Mk, Bk, nonl_red, rhs_red, liftcoef, projcoef
+        if C is None:
+            return Ak, Mk, Bk, nonl_red, rhs_red, liftcoef, projcoef
+        else:
+            Ck = C.dot(Uk)
+            return Ak, Mk, Bk, Ck, nonl_red, rhs_red, liftcoef, projcoef
 
 
 def get_prjred_modfem(M=None, A=None, nonl=None, rhs=None, Uk=None):
