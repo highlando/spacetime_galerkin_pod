@@ -92,7 +92,8 @@ def get_timspapar_podbas(hs=None, hq=None, My=None, Ms=None, snapsl=None,
 
 def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
                    rtol=None, atol=None,
-                   M=None, A=None, rhs=None, nfunc=None, iniv=None):
+                   M=None, A=None, rhs=None, nfunc=None, iniv=None,
+                   nfunc_ptw=None):
     """ wrapper for `scipy.odeint` for space discrete semi-linear PDEs
 
     i.e., for systems of type `Mv + Av + N(v) = rhs`
@@ -118,7 +119,10 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
 
     def _nnfunc(vvec, t):
         if nfunc is None:
-            return 0*vvec
+            if nfunc_ptw is None:
+                return 0*vvec
+            else:
+                return M*nfunc_ptw(vvec)
         else:
             return nfunc(vvec, t)
 
@@ -126,11 +130,17 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
         if A is None:
             return 0*vvec
         else:
-            return lau.mm_dnssps(A, vvec)
+            return A.dot(vvec)
+
+    if rhs is None:
+        def _rhs(t):
+            return 0*iniv
+    else:
+        _rhs = rhs
 
     if M is None:
         def semintrhs(vvec, t):
-            return (rhs(t).flatten() - _mm_nonednssps(A, vvec) -
+            return (_rhs(t).flatten() - _mm_nonednssps(A, vvec) -
                     _nnfunc(vvec, t)).flatten()
     else:
         if isspmatrix(M):
@@ -143,14 +153,20 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
                 Minv = mfac.solve
 
             def semintrhs(vvec, t):
-                return Minv(rhs(t).flatten() -
+                return Minv(_rhs(t).flatten() -
                             _mm_nonednssps(A, vvec).flatten() -
                             _nnfunc(vvec, t)).flatten()
+        elif M.size == 1:  # its a scalar
+            mki = 1./M
+
+            def semintrhs(vvec, t):
+                return mki*(_rhs(t).flatten() - _mm_nonednssps(A, vvec)
+                            - _nnfunc(vvec, t)).flatten()
         else:  # M is dense and (hopefully) small
             mki = np.linalg.inv(M)
 
             def semintrhs(vvec, t):
-                return np.dot(mki, rhs(t).flatten() - _mm_nonednssps(A, vvec)
+                return np.dot(mki, _rhs(t).flatten() - _mm_nonednssps(A, vvec)
                               - _nnfunc(vvec, t)).flatten()
 
     tldct = {}
@@ -158,6 +174,7 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
         tldct.update(dict(rtol=rtol))
     if atol is not None:
         tldct.update(dict(atol=atol))
+
     vv = odeint(semintrhs, iniv.flatten(), tmesh,
                 full_output=full_output, **tldct)
 
@@ -175,7 +192,7 @@ def space_time_norm(errvecsqrd=None, tmesh=None,
         for row in range(spatimvals.shape[0]):
             crow = spatimvals[row, :]
             errvecsql.append(np.dot(crow.T, lau.mm_dnssps(spacemmat, crow)))
-            errvecsqrd = np.array(errvecsql)
+        errvecsqrd = np.array(errvecsql)
 
     dtvec = tmesh[1:] - tmesh[:-1]
     trapv = 0.5*(errvecsqrd[:-1] + errvecsqrd[1:])
@@ -302,6 +319,7 @@ def HaarWavelet(n, x0, xe, N):
 
 def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
                              nspacevecs=0, ntimevecs=0,
+                             strtomassfacs=None,
                              xtratreatini=False, xtratreattermi=False):
     """
     compute the genpod bases from generalized snapshots in the discrete L2
@@ -331,8 +349,8 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
     # we need the factors to be lower triangular to properly treat the
     # initial conditions. that's why we set `choleskydns`
 
-    mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
-    myfac = SparseFactorMassmat(sps.csc_matrix(My), filestr=mystr)
+    # mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
+    myfac = SparseFactorMassmat(sps.csc_matrix(My), filestr=strtomassfacs)
 
     if not xms.__class__ == list:
         xms = [xms]
