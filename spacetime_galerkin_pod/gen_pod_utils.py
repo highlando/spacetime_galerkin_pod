@@ -349,7 +349,8 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
     # we need the factors to be lower triangular to properly treat the
     # initial conditions. that's why we set `choleskydns`
 
-    # mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
+    # strtomassfacs = 'data/sparse_massmat_factor_Y_dimy{0}'.\
+    #     format(My.shape[0])
     myfac = SparseFactorMassmat(sps.csc_matrix(My), filestr=strtomassfacs)
 
     if not xms.__class__ == list:
@@ -372,10 +373,18 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
         if xtratreattermi or xtratreatini:
             rsvs = None
         else:
-            _, rsvs = get_podbases(measmat=np.vstack(lstXtlylist),
+            rsvs, _ = get_podbases(measmat=np.hstack(lstXtlylist),
                                    nlsvecs=ntimevecs, nrsvecs=0)
 
     lyitspacevecs = myfac.solve_Ft(lsvs)  # for the system Galerkin projection
+    # mis = spsla.spsolve(mifac.Ft, lsvs)
+    # milyitspacevecs = mifac.solve_Ft(lsvs)
+    # print(np.linalg.norm(mis - mys))
+    # print(np.linalg.norm(mys - lyitspacevecs))
+    # print(np.linalg.norm(mis - milyitspacevecs))
+    # print(np.linalg.norm(lyitspacevecs - milyitspacevecs))
+    # print(np.linalg.norm((myfac.F - mifac.F).todense()))
+    # import ipdb; ipdb.set_trace()
     lyspacevecs = myfac.F*lsvs  # to project down, e.g., the initial value
     # note that tx = uy.-T*Uky beta*hx  = Ly.-T*Uky*Uky.T*Ly.T*x
 
