@@ -375,6 +375,7 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
         else:
             rsvs, _ = get_podbases(measmat=np.hstack(lstXtlylist),
                                    nlsvecs=ntimevecs, nrsvecs=0)
+            rsvs = rsvs.T  # for consistency
 
     lyitspacevecs = myfac.solve_Ft(lsvs)  # for the system Galerkin projection
     # mis = spsla.spsolve(mifac.Ft, lsvs)
