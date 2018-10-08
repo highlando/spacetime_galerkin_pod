@@ -331,7 +331,8 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
     # we need the factors to be lower triangular to properly treat the
     # initial conditions. that's why we set `choleskydns`
 
-    mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
+    # mystr = 'data/sparse_massmat_factor_Y_dimy{0}'.format(My.shape[0])
+    mystr = None
     myfac = SparseFactorMassmat(sps.csc_matrix(My), filestr=mystr)
 
     if not xms.__class__ == list:
