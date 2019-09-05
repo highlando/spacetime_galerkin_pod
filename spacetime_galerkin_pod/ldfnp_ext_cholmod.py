@@ -3,6 +3,12 @@ import scipy.sparse.linalg as spsla
 import numpy as np
 import scipy.io
 
+""" A wrapper for the cholmod module that let's you work with
+
+    `F*F.T = M` rather than `L*D*L.T = P*M*P.T`
+
+    Note that F are as sparse as L but no more triangular """
+
 try:
     from sksparse.cholmod import cholesky
 except ImportError:
@@ -28,11 +34,6 @@ def save_spa(sparray, fstring='notspecified'):
 
 def load_spa(fstring):
     return scipy.io.mmread(fstring).tocsc()
-""" A wrapper for the cholmod module that let's you work with
-
-    `F*F.T = M` rather than `L*D*L.T = P*M*P.T`
-
-    Note that F are as sparse as L but no more triangular """
 
 
 class SparseFactorMassmat:
@@ -59,47 +60,49 @@ class SparseFactorMassmat:
             self.P = np.arange(nnn)
 
         else:
-            if filestr is not None:
+            try:
+                if filestr is None:
+                    raise IOError()
+                self.F = load_spa(filestr + '_F')
+                self.P = load_npa(filestr + '_P')
+                self.L = load_spa(filestr + '_L')
+                print('loaded factor F s.t. M = F*F.T from: ' + filestr)
+            except IOError:
                 try:
-                    self.F = load_spa(filestr + '_F')
-                    self.P = load_npa(filestr + '_P')
-                    self.L = load_spa(filestr + '_L')
-                    print('loaded factor F s.t. M = F*F.T from: ' + filestr)
-                except IOError:
-                    try:
-                        self.cmfac = cholesky(sps.csc_matrix(massmat))
-                        self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                        self.P = self.cmfac.P()
-                        self.L = self.cmfac.L()
+                    self.cmfac = cholesky(sps.csc_matrix(massmat))
+                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
+                    self.P = self.cmfac.P()
+                    self.L = self.cmfac.L()
+                    if filestr is not None:
                         save_spa(self.F, filestr + '_F')
                         save_npa(self.P, filestr + '_P')
                         save_spa(self.L, filestr + '_L')
                         print('saved F that gives M = F*F.T to: ' + filestr)
                         print('+ permutatn `P` that makes F upper triangular')
                         print('+ and that `L` that is `L=PF`')
-                    except NameError:
-                        print('no sparse cholesky: fallback to dense routines')
-                        import numpy.linalg as npla
-                        L = npla.cholesky(massmat.todense())
-                        self.F = sps.csr_matrix(L)
-                        self.L = self.F
-                        self.Ft = self.F.T
-                        self.P = np.arange(self.F.shape[1])
-
-            else:
-                try:
-                    self.cmfac = cholesky(sps.csc_matrix(massmat))
-                    self.F = self.cmfac.apply_Pt(self.cmfac.L())
-                    self.P = np.arange(self.F.shape[1])
-                    self.L = self.cmfac.L()
-
                 except NameError:
+                    print('no sparse cholesky: fallback to dense routines')
                     import numpy.linalg as npla
                     L = npla.cholesky(massmat.todense())
                     self.F = sps.csr_matrix(L)
                     self.L = self.F
                     self.Ft = self.F.T
                     self.P = np.arange(self.F.shape[1])
+
+            # else:
+            #     try:
+            #         self.cmfac = cholesky(sps.csc_matrix(massmat))
+            #         self.F = self.cmfac.apply_Pt(self.cmfac.L())
+            #         self.P = np.arange(self.F.shape[1])
+            #         self.L = self.cmfac.L()
+
+            #     except NameError:
+            #         import numpy.linalg as npla
+            #         L = npla.cholesky(massmat.todense())
+            #         self.F = sps.csr_matrix(L)
+            #         self.L = self.F
+            #         self.Ft = self.F.T
+            #         self.P = np.arange(self.F.shape[1])
 
         self.Ft = (self.F).T
         self.Lt = (self.L).T
@@ -151,12 +154,17 @@ class SparseFactorMassmat:
 if __name__ == '__main__':
     import glob
     import os
-    N, k, alpha, density = 100, 5, 1e-2, 0.2
-    E = sps.eye(N)
-    V = sps.rand(N, k, density=density)
-    mockmy = E + alpha*sps.csc_matrix(V*V.T)
+    # N, k, alpha, density = 100, 5, 1e-2, 0.2
+    # E = sps.eye(N)
+    # V = sps.rand(N, k, density=density)
+    # mockmy = E + alpha*sps.csc_matrix(V*V.T)
+    N = 25
+    matstring = 'testdata/massmat_square_CG1_N{0}'.format(N)
+    matstring = 'testdata/testdamy'
+    mockmy = load_spa(matstring)
+    NV = mockmy.shape[0]
 
-    rhs = np.random.randn(N, 2)
+    rhs = np.random.randn(NV, 2)
 
     # remove previously stored matrices
     filestr = 'testing'
@@ -164,12 +172,16 @@ if __name__ == '__main__':
         os.remove(fname)
 
     print('freshly computed...')
-    facmy = SparseFactorMassmat(mockmy, filestr=filestr)
+    facmy = SparseFactorMassmat(sps.csc_matrix(mockmy), filestr=filestr)
+    import ipdb; ipdb.set_trace()
 
     Fitrhs = facmy.solve_Ft(rhs)
+    dirctFitrhs = spsla.spsolve(facmy.Ft, rhs)
+
     Firhs = facmy.solve_F(rhs)
     mitestrhs = facmy.solve_M(rhs)
 
+    print(np.allclose(Fitrhs, dirctFitrhs))
     print(np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense()))
     print(np.allclose(rhs, facmy.Ft*Fitrhs))
     print(np.allclose(rhs, facmy.F*Firhs))
