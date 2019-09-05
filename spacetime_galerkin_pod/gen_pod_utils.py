@@ -602,6 +602,24 @@ def get_ms(sdim=None, tmesh=None, basfuntype='pl'):
         raise NotImplementedError('by now only "pl" functions')
 
 
+def get_one_norms(sdim=None, tmesh=None, basfuntype='pl'):
+    onl = []
+    if basfuntype == 'pl':
+        x0, xe = tmesh[0], tmesh[-1]
+        for s in range(0, sdim):
+            jhf, pts = hatfuncs(n=s, x0=x0, xe=xe, N=sdim, retpts=True)
+
+            def ujduk(x):
+                return jhf(x)
+            con = 0
+            for ts in range(len(pts)-1):
+                con += sii.fixed_quad(ujduk, pts[ts], pts[ts+1], n=3)[0]
+            onl.append(con)
+        return onl
+    else:
+        raise NotImplementedError('by now only "pl" functions')
+
+
 def get_dms(sdim=None, tmesh=None, basfuntype='pl'):
     dms = np.zeros((sdim, sdim))
     if basfuntype == 'pl':
