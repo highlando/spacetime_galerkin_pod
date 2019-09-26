@@ -484,7 +484,7 @@ def get_genpodmats(sol=None, poddim=None, sdim=None, tmesh=None,
 
 
 def get_ksvvecs(sol=None, poddim=None, plotsvs=False, labl='SVs'):
-    U, S, V = np.linalg.svd(sol)
+    U, S, V = np.linalg.svd(sol, full_matrices=False)
 
     Uk = U[:, 0:poddim]
 
