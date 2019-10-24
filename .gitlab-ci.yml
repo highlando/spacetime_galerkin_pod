@@ -4,7 +4,7 @@ job1:
   script:
     - python3 -V  # Print out python version for debugging
     - pip3 install nose numpy scipy
-    - export PYTHONPATH=$PWD/spacetime_galerkin_pod
+    - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - cd tests
     - nosetests
