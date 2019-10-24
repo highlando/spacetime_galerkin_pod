@@ -4,8 +4,7 @@ job1:
   script:
     - python3 -V  # Print out python version for debugging
     - pip3 install nose numpy scipy
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
+    - export PYTHONPATH=$(pwd)
     - cd tests
     - nosetests
   only:
