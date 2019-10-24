@@ -3,6 +3,7 @@ job1:
   script:
     - python3 -V  # Print out python version for debugging
     - pip3 install nose numpy scipy
+    - export PYTHONPATH="$PYTHONPATH:spacetime_galerkin_pod/"
     - cd tests
     - nosetests
   only:
