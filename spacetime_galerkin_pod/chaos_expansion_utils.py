@@ -4,11 +4,12 @@ import numpy.linalg as npla
 
 def get_gaussqr_uniform(N=2):
     '''
-    Gaussian Quad Points/Weights
+    Gaussian Quad Points/Weights for uniform distribution
+    -- these are the standard points/weights
 
     Notes
     ---
-    Only for the interval `(0,1)`
+    For the interval `(0,1)` !
     Naive implementation
     '''
 

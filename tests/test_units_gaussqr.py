@@ -1,5 +1,5 @@
 import unittest
-from get_gaussqr_wrtdnsty import get_gaussqr_uniform
+from spacetime_galerkin_pod.chaos_expansion_utils import get_gaussqr_uniform
 import numpy as np
 
 
