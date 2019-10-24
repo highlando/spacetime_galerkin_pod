@@ -37,6 +37,6 @@ if __name__ == '__main__':
     lytitestrhs = facmy.solve_Ft(testrhs)
     lyitestrhs = facmy.solve_F(testrhs)
 
-    print np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense())
-    print np.allclose(testrhs, facmy.Ft*lytitestrhs)
-    print np.allclose(testrhs, facmy.F*lyitestrhs)
+    print(np.allclose(mockmy.todense(), (facmy.F*facmy.Ft).todense()))
+    print(np.allclose(testrhs, facmy.Ft*lytitestrhs))
+    print(np.allclose(testrhs, facmy.F*lyitestrhs))

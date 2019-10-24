@@ -11,7 +11,7 @@ class GaussQRTests(unittest.TestCase):
                          [.5*(1-np.sqrt(3./5)), .5, .5*(1+np.sqrt(3./5))]]
         self.wghtlist = [[1],
                          [.5, .5],
-                         [5./18, 8./18, 5./18]]
+                         [5./19, 8./18, 5./18]]
 
     def test_gaussqr_uniform(self):
         for k, N in enumerate(self.Nlist):
@@ -21,3 +21,6 @@ class GaussQRTests(unittest.TestCase):
             # print(weights)
             self.assertTrue(np.allclose(abscissae, np.array(self.absclist[k])))
             self.assertTrue(np.allclose(weights, self.wghtlist[k]))
+
+if __name__ == '__main__':
+    unittest.main()
