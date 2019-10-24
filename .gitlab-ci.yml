@@ -1,0 +1,10 @@
+before_script:
+  - python3 -V  # Print out python version for debugging
+  - pip install nosetest
+
+job1:
+  script:
+    - cd tests
+    - nosetests
+  only:
+    - mass-mat-hosvd
