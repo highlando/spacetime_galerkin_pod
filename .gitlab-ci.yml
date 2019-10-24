@@ -1,6 +1,6 @@
 before_script:
-  - apt install python3
-  - apt install pip
+  - apt install --assume-yes python3
+  - apt install --assume-yes pip
   - python3 -V  # Print out python version for debugging
   - pip install nosetest
 
