@@ -1,5 +1,4 @@
-
-set_it_up:
+before_script:
   - python3 -V  # Print out python version for debugging
   - pip install nosetest
 
