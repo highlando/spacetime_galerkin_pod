@@ -173,7 +173,6 @@ if __name__ == '__main__':
 
     print('freshly computed...')
     facmy = SparseFactorMassmat(sps.csc_matrix(mockmy), filestr=filestr)
-    import ipdb; ipdb.set_trace()
 
     Fitrhs = facmy.solve_Ft(rhs)
     dirctFitrhs = spsla.spsolve(facmy.Ft, rhs)
