@@ -1,10 +1,8 @@
 job1:
-
   image: "docker-registry.csc.mpi-magdeburg.mpg.de:5000/ci-images/minimal/ubuntu:bionic-python3"
-  - python3 -V  # Print out python version for debugging
-  - pip3 install nosetest numpy scipy
-
   script:
+    - python3 -V  # Print out python version for debugging
+    - pip3 install nosetest numpy scipy
     - cd tests
     - nosetests
   only:
