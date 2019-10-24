@@ -1,0 +1,11 @@
+
+set_it_up:
+  - python3 -V  # Print out python version for debugging
+  - pip install nosetest
+
+test:
+  script:
+    - cd tests
+    - nosetests
+  only:
+    - mass-mat-hosvd
