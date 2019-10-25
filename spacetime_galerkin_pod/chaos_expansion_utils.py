@@ -2,16 +2,21 @@ import numpy as np
 import numpy.linalg as npla
 
 
-def get_gaussqr_uniform(N=2):
+def get_gaussqr_uniform(N=2, a=0., b=1.):
     '''
     Gaussian Quad Points/Weights for uniform distribution
     -- these are the standard points/weights
 
     Notes
     ---
-    For the interval `(0,1)` !
+    computation for the interval `(0,1)`, then transformation to `(a, b)`
     Naive implementation
     '''
+
+    weightfac = b - a
+
+    def abscshiftscale(absc):
+        return weightfac*absc + a
 
     azero = .5
 
@@ -22,7 +27,7 @@ def get_gaussqr_uniform(N=2):
         return i/(2*np.sqrt(4*i*i-1))
 
     if N == 1:
-        return [.5], [1.]
+        return [abscshiftscale(.5)], [weightfac*1.]
 
     # else:
     J = np.zeros((N, N))
@@ -43,10 +48,11 @@ def get_gaussqr_uniform(N=2):
 
     abscissae, wvecs = npla.eigh(J)
     weights = np.zeros((N, ))
-    for i in range(N):
-        weights[i] = wvecs[0, i]**2
 
-    return abscissae, weights
+    for i in range(N):
+        weights[i] = weightfac*wvecs[0, i]**2
+
+    return abscshiftscale(abscissae), weights
 
 if __name__ == '__main__':
     wgo, wwo = get_gaussqr_uniform(N=1)
