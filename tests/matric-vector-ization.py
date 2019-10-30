@@ -1,7 +1,7 @@
 import numpy as np
-import scipy.sparse as sps
+# import scipy.sparse as sps
 
-from spacetime_galerkin_pod import gen_pod_utils as gpu
+# from spacetime_galerkin_pod import gen_pod_utils as gpu
 
 modes = 3
 dimlist = [x+2 for x in range(modes)]
@@ -34,20 +34,6 @@ for cmode in range(modes):
         print(mmatlist[cmode+1].dot(X.reshape((dimrray[0], -1))))
     except:
         print(mmatlist[0].dot(X.reshape((dimrray[0], -1))))
-
-
-def apply_mfacs_monemat(X, massfaclist):
-    lfac = massfaclist[2]
-    for clfac in massfaclist[2:]:
-        lfac = sps.kron(clfac, lfac)  # TODO: this will likely explode
-    return (massfaclist[0].T.dot(X)).dot(lfac)
-
-
-def modeone_massmats_svd(X, massfaclist, kdim):
-    Xdims = X.shape()
-    Xone = X.reshape((Xdims[0], -1))  # mode-1 matricization
-    mfXonemfs = apply_mfacs_monemat(Xone, massfaclist)
-    return gpu.get_ksvvecs(sol=mfXonemfs, poddim=kdim)
 
 
 def hovsd_wrt_massmatrices(X, massfaclist=None, kdimlist=None):
