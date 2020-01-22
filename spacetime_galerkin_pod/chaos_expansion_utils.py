@@ -27,7 +27,7 @@ def get_gaussqr_uniform(N=2, a=0., b=1.):
         return i/(2*np.sqrt(4*i*i-1))
 
     if N == 1:
-        return [abscshiftscale(.5)], [weightfac*1.]
+        return np.array([abscshiftscale(.5)]), np.array([weightfac*1.])
 
     # else:
     J = np.zeros((N, N))
@@ -53,6 +53,7 @@ def get_gaussqr_uniform(N=2, a=0., b=1.):
         weights[i] = weightfac*wvecs[0, i]**2
 
     return abscshiftscale(abscissae), weights
+
 
 if __name__ == '__main__':
     wgo, wwo = get_gaussqr_uniform(N=1)
