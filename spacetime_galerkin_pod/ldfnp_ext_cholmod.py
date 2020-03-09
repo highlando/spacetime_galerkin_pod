@@ -10,7 +10,6 @@ import scipy.io
     Note that F are as sparse as L but no more triangular """
 
 try:
-    raise ImportError()
     from sksparse.cholmod import cholesky
 except ImportError:
     print('Cannot import sksparse -- hope we can do without')
