@@ -10,6 +10,7 @@ import scipy.io
     Note that F are as sparse as L but no more triangular """
 
 try:
+    raise ImportError()
     from sksparse.cholmod import cholesky
 except ImportError:
     print('Cannot import sksparse -- hope we can do without')
@@ -118,11 +119,19 @@ class SparseFactorMassmat:
     def solve_Ft(self, rhs):
         try:
             if self.uppertriag:
-                litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
-                                                    lower=True)[self.Pt, :]
+                try:
+                    litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                        lower=True)[self.Pt, :]
+                except IndexError:
+                    litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                        lower=True)[self.Pt]
             else:
-                litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
-                                                    lower=False)[self.Pt, :]
+                try:
+                    litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                        lower=False)[self.Pt, :]
+                except IndexError:
+                    litptrhs = spsla.spsolve_triangular(self.Lt, rhs,
+                                                        lower=False)[self.Pt]
         except AttributeError:  # no `..._triangular` in elder scipy like 0.15
             try:
                 litptrhs = spsla.spsolve(self.Lt, rhs)[self.Pt, :]
@@ -134,10 +143,17 @@ class SparseFactorMassmat:
     def solve_F(self, rhs):
         try:
             if self.uppertriag:
-                liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :],
-                                                   lower=False)
+                try:
+                    liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :],
+                                                       lower=False)
+                except IndexError:
+                    liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P],
+                                                       lower=False)
             else:
-                liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
+                try:
+                    liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P, :])
+                except IndexError:
+                    liptrhs = spsla.spsolve_triangular(self.L, rhs[self.P])
         except AttributeError:  # no `..._triangular` in elder scipy like 0.15
             try:
                 liptrhs = spsla.spsolve(self.L, rhs[self.P, :])
@@ -150,6 +166,7 @@ class SparseFactorMassmat:
             return self.cmfac.solve_A(rhs)
         except AttributeError:
             return self.solve_Ft(self.solve_F(rhs))
+
 
 if __name__ == '__main__':
     import glob
@@ -173,7 +190,6 @@ if __name__ == '__main__':
 
     print('freshly computed...')
     facmy = SparseFactorMassmat(sps.csc_matrix(mockmy), filestr=filestr)
-    import ipdb; ipdb.set_trace()
 
     Fitrhs = facmy.solve_Ft(rhs)
     dirctFitrhs = spsla.spsolve(facmy.Ft, rhs)
