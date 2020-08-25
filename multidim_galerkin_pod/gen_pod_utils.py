@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.sparse as sps
 import scipy.integrate as sii
-import matplotlib.pyplot as plt
 import sadptprj_riclyap_adi.lin_alg_utils as lau
 
 try:
@@ -447,6 +446,7 @@ def get_podbases(measmat=None, nlsvecs=0, nrsvecs=0, plotsvs=False,
     Vk = V[:nrsvecs, :]
 
     if plotsvs:
+        import matplotlib.pyplot as plt
         plt.figure(222)
         plt.plot(S, 'o', label='genPOD')
         plt.semilogy()
@@ -472,6 +472,7 @@ def get_genpodmats(sol=None, poddim=None, sdim=None, tmesh=None,
     Uk = U[:, 0:poddim]
 
     if plotsvs:
+        import matplotlib.pyplot as plt
         plt.figure(222)
         plt.plot(S, 'o', label='genPOD')
         plt.semilogy()
@@ -489,6 +490,7 @@ def get_ksvvecs(sol=None, poddim=None, plotsvs=False, labl='SVs'):
     Uk = U[:, 0:poddim]
 
     if plotsvs:
+        import matplotlib.pyplot as plt
         plt.figure(333)
         plt.plot(S, 'o', label=labl)
         plt.semilogy()
