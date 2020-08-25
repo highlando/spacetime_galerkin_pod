@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sps
 
-import spacetime_galerkin_pod.gen_pod_utils as gpu
+import multidim_galerkin_pod.gen_pod_utils as gpu
 
 
 def tnsrtrnsps(X, times=1):
