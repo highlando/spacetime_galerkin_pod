@@ -1,5 +1,5 @@
 import unittest
-from spacetime_galerkin_pod.chaos_expansion_utils import get_gaussqr_uniform
+from multidim_galerkin_pod.chaos_expansion_utils import get_gaussqr_uniform
 import numpy as np
 
 
@@ -63,6 +63,7 @@ class GaussQRTests(unittest.TestCase):
             self.assertTrue(np.allclose(abscissae,
                                         np.array(self.absclistmoo[k])))
             self.assertTrue(np.allclose(weights, self.wghtlistmoo[k]))
+
 
 if __name__ == '__main__':
     unittest.main()

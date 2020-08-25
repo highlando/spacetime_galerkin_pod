@@ -6,8 +6,8 @@ import numpy as np
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
-from spacetime_galerkin_pod.ldfnp_ext_cholmod import SparseFactorMassmat
-import spacetime_galerkin_pod.ldfnp_ext_cholmod as lec
+from multidim_galerkin_pod.ldfnp_ext_cholmod import SparseFactorMassmat
+import multidim_galerkin_pod.ldfnp_ext_cholmod as lec
 
 
 class LdfnpExtChol(unittest.TestCase):
