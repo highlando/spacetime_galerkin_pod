@@ -6,5 +6,3 @@ unittests:
     - export PYTHONPATH=$(pwd)
     - cd tests
     - nosetests
-  only:
-    - mass-mat-hosvd
