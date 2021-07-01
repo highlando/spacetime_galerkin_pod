@@ -20,6 +20,7 @@ __all__ = ['uBasPLF',
            'get_podbases',
            'get_podred_model',
            'get_podbases_wrtmassmats',
+           'get_podbas_wrtmass',
            'get_podmats',
            'get_spaprjredmod',
            'get_redmatfunc',
@@ -314,6 +315,33 @@ def HaarWavelet(n, x0, xe, N):
                 sqrt(2.0**l2)*Haar_helper((2.0**l2)*x[ii] - (l3*(xe - x0)),
                                           x0, xe)
         return haar
+
+
+def get_podbas_wrtmass(xms, My=None, npodvecs=0, strtomassfacs=None):
+    """
+    compute the genpod bases from generalized snapshots in the discrete L2
+
+    inner products induced by `My` from the space discretization
+
+    Parameters
+    ---
+    xms: (Nq, Ns)
+        the snapshots
+    My: (Nq, Nq) sparse array
+        mass matrix of the space discretization
+
+    """
+
+    myfac = SparseFactorMassmat(sps.csc_matrix(My))  # , filestr=mystr)
+
+    ftxms = myfac.Ft*xms
+    lsvs, _ = get_podbases(measmat=ftxms, nlsvecs=npodvecs, nrsvecs=0)
+    lyitspacevecs = myfac.solve_Ft(lsvs)
+    # for the projection of coefficients and the lifting
+    lyspacevecs = myfac.F*lsvs
+    # projection of, e.g., the initial value
+
+    return lyitspacevecs, lyspacevecs
 
 
 def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,

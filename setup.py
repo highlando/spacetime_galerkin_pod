@@ -4,10 +4,11 @@ with open("README.md", 'r') as f:
     long_description = f.read()
 
 setup(name='multidim_galerkin_pod',
-      version='1.0.1',
+      version='1.0.2',
       description='Helper/core functions for Galerkin POD in multiple dimensions.',
       license="GPLv3",
       long_description=long_description,
+      long_description_content_type='text/markdown',
       author='Jan Heiland',
       author_email='jnhlnd@gmail.com',
       url="https://github.com/highlando/spacetime_galerkin_pod",
