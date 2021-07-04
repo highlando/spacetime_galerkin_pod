@@ -332,10 +332,14 @@ def get_podbas_wrtmass(xms, My=None, npodvecs=0, strtomassfacs=None):
 
     """
 
+    # print('factorizing M')
     myfac = SparseFactorMassmat(sps.csc_matrix(My))  # , filestr=mystr)
+    # print('done!')
 
     ftxms = myfac.Ft*xms
+    # print('comp SVD')
     lsvs, _ = get_podbases(measmat=ftxms, nlsvecs=npodvecs, nrsvecs=0)
+    # print('done')
     lyitspacevecs = myfac.solve_Ft(lsvs)
     # for the projection of coefficients and the lifting
     lyspacevecs = myfac.F*lsvs
@@ -469,7 +473,7 @@ def get_podbases(measmat=None, nlsvecs=0, nrsvecs=0, plotsvs=False,
         measmat = lau.apply_invsqrt_fromright(invsqrtrm, measmat)
         print('apply mass sqrt : This part will be deprecated soon')
 
-    U, S, V = np.linalg.svd(measmat)
+    U, S, V = np.linalg.svd(measmat, full_matrices=False)
     Uk = U[:, 0:nlsvecs]
     Vk = V[:nrsvecs, :]
 
