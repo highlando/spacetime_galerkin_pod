@@ -4,7 +4,7 @@ with open("README.md", 'r') as f:
     long_description = f.read()
 
 setup(name='multidim_galerkin_pod',
-      version='1.0.3',
+      version='1.0.3dev1',
       description='Helper/core functions for Galerkin POD in multiple dimensions.',
       license="GPLv3",
       long_description=long_description,
