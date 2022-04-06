@@ -1,5 +1,5 @@
 import unittest
-from multidim_galerkin_pod.chaos_expansion_utils import get_gaussqr_uniform
+from multidim_galerkin_pod.chaos_expansion_utils import get_weighted_gaussqr
 import numpy as np
 
 
@@ -40,7 +40,7 @@ class GaussQRTests(unittest.TestCase):
         '''
 
         for k, N in enumerate(self.Nlist):
-            abscissae, weights = get_gaussqr_uniform(N)
+            abscissae, weights = get_weighted_gaussqr(N)
             print(abscissae)
             print(self.absclist[k])
             print(weights)
@@ -54,7 +54,7 @@ class GaussQRTests(unittest.TestCase):
         '''
 
         for k, N in enumerate(self.Nlist):
-            abscissae, weights = get_gaussqr_uniform(N, a=-1., b=1.)
+            abscissae, weights = get_weighted_gaussqr(N, a=-1., b=1.)
             print('k=', k)
             print(abscissae)
             print(self.absclistmoo[k])
