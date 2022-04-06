@@ -1,0 +1,7 @@
+setuptools
+pbr
+rich
+scikit-sparse
+numpy
+scipy
+sadptprj_riclyap_adi
