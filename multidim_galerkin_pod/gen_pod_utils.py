@@ -333,7 +333,11 @@ def get_podbas_wrtmass(xms, My=None, npodvecs=0, strtomassfacs=None):
     """
 
     # print('factorizing M')
-    myfac = SparseFactorMassmat(sps.csc_matrix(My))  # , filestr=mystr)
+    if My is not None:
+        myfac = SparseFactorMassmat(sps.csc_matrix(My))  # , filestr=mystr)
+    else:
+        raise UserWarning('no mass matrix provided -- ' +
+                          'use `My=sps.eye(n)` if M=id')
     # print('done!')
 
     ftxms = myfac.Ft*xms
@@ -456,7 +460,8 @@ def get_podbases_wrtmassmats(xms=None, Ms=None, My=None,
     return lyitspacevecs, lyspacevecs, lsittimevecs, lstimevecs
 
 
-def get_podbases(measmat=None, nlsvecs=0, nrsvecs=0, plotsvs=False,
+def get_podbases(measmat=None, nlsvecs=0, nrsvecs=0,
+                 plotsvs=False, plotlabel='$\\sigma_k$', plottitle='',
                  sqrtlm=None, sqrtrm=None, invsqrtlm=None, invsqrtrm=None,
                  retsvals=False):
 
@@ -480,9 +485,9 @@ def get_podbases(measmat=None, nlsvecs=0, nrsvecs=0, plotsvs=False,
     if plotsvs:
         import matplotlib.pyplot as plt
         plt.figure(222)
-        plt.plot(S, 'o', label='genPOD')
+        plt.plot(S, 'o', label=plotlabel)
         plt.semilogy()
-        plt.title('Singular Values of the generalized measurement matrix')
+        plt.title(plottitle)
         plt.legend()
         plt.show(block=False)
 
