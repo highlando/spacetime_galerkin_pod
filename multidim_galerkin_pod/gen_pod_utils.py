@@ -191,7 +191,7 @@ def space_time_norm(errvecsqrd=None, tmesh=None,
         errvecsql = []
         for row in range(spatimvals.shape[0]):
             crow = spatimvals[row, :]
-            errvecsql.append(np.dot(crow.T, lau.mm_dnssps(spacemmat, crow)))
+            errvecsql.append(np.dot(crow.T, spacemmat.dot(crow)))
         errvecsqrd = np.array(errvecsql)
 
     dtvec = tmesh[1:] - tmesh[:-1]
@@ -726,7 +726,7 @@ def get_redmatfunc(ULk=None, UVk=None, matfunc=None):
     ''' setup a function `v -> ULk.T * matfunc(UVk*v) * ULk` '''
 
     def redmatfunc(vvec):
-        return np.dot(lau.mm_dnssps(ULk.T, matfunc(np.dot(UVk, vvec))), ULk)
+        return np.dot((ULk.T @ matfunc(np.dot(UVk, vvec))), ULk)
     return redmatfunc
 
 
