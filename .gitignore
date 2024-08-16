@@ -3,3 +3,4 @@ ChangeLog
 build
 dist
 multidim_galerkin_pod.egg-info
+pyrightconfig.json
