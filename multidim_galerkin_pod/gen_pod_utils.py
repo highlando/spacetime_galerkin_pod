@@ -133,7 +133,7 @@ def time_int_semil(tmesh=None, Nts=None, t0=None, tE=None, full_output=False,
             return A.dot(vvec)
 
     if rhs is None:
-        def _rhs(t):
+        def _rhs(_):
             return 0*iniv
     else:
         _rhs = rhs
