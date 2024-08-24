@@ -108,3 +108,89 @@ def inflate_modek(rX, ksvecs=None, mode=None):
     tXdim.extend(trXdim[1:])
     _tX = _flttX.reshape(tuple(tXdim))
     return tnsrtrnsps(_tX, tomode=-mode)  # times=-(mode-1))
+
+
+def flatten_mode(X, mode=None, tdims=None, howmany=1):
+    ''' flatten modes by merging neighboring modes
+
+    Parameters
+    ----------
+    X : array_like
+        the tensor
+    mode : int
+        the mode where be flattening starts
+    howmany : int, optional
+        how many modes to be merged
+    tdims : tuple, optional
+        the dimensions of tensor
+
+    Returns
+    -------
+    Xf : array_like
+        the flattened tensor
+    tfdims : tuple
+        of dimensions of `Xf` with the dimension of the flattened modes being a
+        tuple of the original dimensions
+    '''
+
+    tfdims = list(tdims[:mode-1])
+    _tdims = X.shape  # the nominal dimensions of the tensor
+    _tfdims = list(_tdims[:mode-1])  # for local use
+
+    accudim = 1
+    flatdiml = []
+
+    for idf in range(mode-1, mode+howmany):
+        accudim = accudim*tdims[idf]
+        flatdiml.append(tdims[idf])
+
+    tfdims.append(tuple(flatdiml))
+    _tfdims.append(accudim)
+
+    tfdims.extend(tdims[mode+howmany:])
+    _tfdims.extend(_tdims[mode+howmany:])
+
+    Xf = X.reshape(_tfdims)
+
+    return Xf, tuple(tfdims)
+
+
+def unflatten_mode(Xf, mode, ftdims=None):
+    ''' unflatten a (previously merged) mode by splitting the merged modes back
+    to their original dimensions
+
+    Parameters
+    ----------
+    Xf : array_like
+        the flattened tensor
+    mode : int
+        the mode to be unflattened
+    tfdims : tuple
+        that includes the original dimension information of the flat modes
+
+    Returns
+    -------
+    X : array_like
+        the unflattened tensor
+    tdim : tuple
+        the dimension of X (including possibly other flat modes)
+    '''
+
+    # Create the new dimensions list
+    cur_dims = Xf.shape
+
+    new_dims = list(cur_dims[:mode-1])
+    tdim = list(ftdims[:mode-1])
+
+    # Add the dimensions of the flattened modes
+    new_dims.extend(ftdims[mode-1])  # ought to be a tuple
+    tdim.extend(ftdims[mode-1])  # ought to be a tuple
+
+    # Add the remaining dimensions
+    new_dims.extend(cur_dims[mode:])
+    tdim.extend(ftdims[mode:])
+
+    # Reshape the tensor back to its original dimensions
+    X = Xf.reshape(new_dims)
+
+    return X, tuple(tdim)
