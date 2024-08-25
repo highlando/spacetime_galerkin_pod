@@ -1,6 +1,7 @@
 import unittest
 import glob
 import os
+import logging
 
 import numpy as np
 import scipy.sparse as sps
@@ -9,12 +10,15 @@ import scipy.sparse.linalg as spsla
 from multidim_galerkin_pod.ldfnp_ext_cholmod import SparseFactorMassmat
 import multidim_galerkin_pod.ldfnp_ext_cholmod as lec
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class LdfnpExtChol(unittest.TestCase):
 
     def setUp(self):
         N = 25
-        matstring = 'testdata/massmat_square_CG1_N{0}'.format(N)
+        matstring = 'testdata/massmat_square_CG1_N{0}.mtx'.format(N)
         self.my = sps.csr_matrix(lec.load_spa(matstring))
         self.NV = self.my.shape[0]
         self.rhs = np.random.randn(self.NV, 2)

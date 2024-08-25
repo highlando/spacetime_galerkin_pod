@@ -1,3 +1,5 @@
+import logging
+
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 import numpy as np
@@ -9,6 +11,7 @@ import scipy.io
 
     Note that F are as sparse as L but no more triangular """
 
+logger = logging.getLogger(__name__)
 try:
     from sksparse.cholmod import cholesky
 except ImportError:
@@ -29,11 +32,17 @@ def load_npa(fstring):
 
 
 def save_spa(sparray, fstring='notspecified'):
+    logger.debug(fstring)
     scipy.io.mmwrite(fstring, sparray)
 
 
 def load_spa(fstring):
-    return scipy.io.mmread(fstring).tocsc()
+    if not fstring[-4:] == '.mtx':
+        cfstr = fstring + '.mtx'
+    else:
+        cfstr = fstring
+    logger.debug(fstring)
+    return scipy.io.mmread(cfstr).tocsc()
 
 
 class SparseFactorMassmat:
@@ -66,8 +75,9 @@ class SparseFactorMassmat:
                 self.F = load_spa(filestr + '_F')
                 self.P = load_npa(filestr + '_P')
                 self.L = load_spa(filestr + '_L')
-                print('loaded factor F s.t. M = F*F.T from: ' + filestr)
-            except IOError:
+                logger.info('loaded factor F s.t. M = F*F.T from: ' + filestr)
+            except (IOError, ValueError) as e:
+                logger.debug(e, exc_info=True)
                 try:
                     self.cmfac = cholesky(sps.csc_matrix(massmat))
                     self.F = self.cmfac.apply_Pt(self.cmfac.L())
@@ -77,9 +87,10 @@ class SparseFactorMassmat:
                         save_spa(self.F, filestr + '_F')
                         save_npa(self.P, filestr + '_P')
                         save_spa(self.L, filestr + '_L')
-                        print('saved F that gives M = F*F.T to: ' + filestr)
-                        print('+ permutatn `P` that makes F upper triangular')
-                        print('+ and that `L` that is `L=PF`')
+                        logger.info('saved F that gives M = F*F.T to: '
+                                    + filestr)
+                        logger.info('+ permutatn `P` that makes F triangular')
+                        logger.info('+ and that `L` that is `L=PF`')
                 except NameError:
                     print('no sparse cholesky: fallback to dense routines')
                     import numpy.linalg as npla
